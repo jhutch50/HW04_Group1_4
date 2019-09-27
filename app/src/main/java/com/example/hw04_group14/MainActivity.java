@@ -40,12 +40,12 @@ public class MainActivity extends AppCompatActivity {
         btn_delete_movie = findViewById(R.id.button_delete_movie);
         btn_show_list_by_year = findViewById(R.id.button_show_list_by_year);
         btn_show_list_by_rating = findViewById(R.id.button_show_list_by_rating);
-    /* //for testing delete
+    //for testing delete
         movies.add(new Movie());
         movies.add(new Movie());
         movies.get(0).setTitle("Star Wars");
         movies.get(1).setTitle("Inception");
-    */
+
         //using the buttons defined below, pass the movie list in the extras
 
         btn_add_movie.setOnClickListener(new View.OnClickListener() {
@@ -63,12 +63,15 @@ public class MainActivity extends AppCompatActivity {
         btn_edit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, EditMovieActivity.class);
-                Bundle sentData = new Bundle();
-                sentData.putSerializable("movies", movies);
-                intent.putExtra(TAG_IMAGE, sentData);
-                startActivity(intent);
-                finish();
+                StringBuilder sb = new StringBuilder();
+                if(!movies.isEmpty()) {
+                    for (Movie movie : movies) {
+                        sb.append(";" + movie.getTitle());
+                    }
+                    new selectEditMovie().execute(sb.toString());
+                }else{
+                    Toast.makeText(MainActivity.this, "No movies in list", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -88,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
                     for (Movie movie : movies) {
                         sb.append(";" + movie.getTitle());
                     }
-                    new getMoviePick().execute(sb.toString());
+                    new removeMovie().execute(sb.toString());
                 }else{
                     Toast.makeText(MainActivity.this, "No movies in list", Toast.LENGTH_SHORT).show();
                 }
@@ -126,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private class getMoviePick extends AsyncTask<String,Void,String> {
+    private class removeMovie extends AsyncTask<String,Void,String> {
 
         @Override
         protected String doInBackground(String... strings) {
@@ -168,5 +171,52 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private class selectEditMovie extends AsyncTask<String,Void,String> {
+
+        @Override
+        protected String doInBackground(String... strings) {
+            if(strings[0].equals("")){
+                Toast.makeText(MainActivity.this, "No movies in list", Toast.LENGTH_SHORT).show();
+
+                return null;
+            }else {
+                return strings[0];
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            final String[] temp = s.split(";");
+            //1. When the user selects “Delete Movie” button in the Main Activity, just like the Edit
+            //Movie part, an Alert Dialogue should come up with the movie list.
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder.setTitle("Pick a Movie");
+            builder.setItems(temp, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    String title = temp[which];
+                    Log.d("heyo",title + " "+which);
+
+                    Intent intent = new Intent(MainActivity.this, EditMovieActivity.class);
+                    Bundle sentData = new Bundle();
+                    sentData.putSerializable("movie", movies.get(which-1));
+                    intent.putExtra(TAG_IMAGE, sentData);
+                    startActivity(intent);
+                    finish();
+
+                    //Toast.makeText(MainActivity.this, title + " has been deleted", Toast.LENGTH_SHORT).show();
+                }
+            });
+            AlertDialog dialog = builder.create();
+            dialog.show();
+            //2. When you select one of the movies in the list, it should delete it from the Movie list.
+
+
+
+            //3. Toast a message showing that the movie is deleted that includes the movie name.
+
+
+        }
+    }
 
 }
